@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shanna Samba</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,200;0,300;1,200;1,300&family=Inter:wght@300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#000;--white:#fff;--grey:#666;
+  --font-d:'Cormorant Garant',serif;
+  --font-b:'Inter',sans-serif;
+  --nav:210px;
+}
+html,body{height:100%;background:var(--black);color:var(--white);font-family:var(--font-b);font-weight:300;overflow:hidden;cursor:none}
+
+/* CURSEUR */
+#cur{position:fixed;width:20px;height:20px;border:1px solid #fff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .15s,height .15s;mix-blend-mode:difference}
+#cur.b{width:44px;height:44px}
+
+/* SIDEBAR — invisible sur hero, visible sur pages */
+#sb{
+  position:fixed;top:0;left:0;bottom:0;width:var(--nav);
+  z-index:200;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:44px 32px 36px;
+  background:var(--black);
+  border-right:1px solid rgba(255,255,255,0.07);
+  transform:translateX(-100%);
+  transition:transform .4s cubic-bezier(.25,.46,.45,.94);
+}
+#sb.show{transform:translateX(0)}
+
+.sb-name{
+  font-family:var(--font-d);font-size:13px;font-weight:200;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--white);line-height:1.5;margin-bottom:44px;cursor:none;
+}
+.sb-name span{display:block}
+
+nav ul{list-style:none;display:flex;flex-direction:column;gap:3px}
+nav ul li a{
+  display:block;font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--grey);text-decoration:none;padding:5px 0;cursor:none;
+  transition:color .2s;position:relative;
+}
+nav ul li a::before{
+  content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+  width:4px;height:1px;background:#fff;opacity:0;transition:opacity .2s;
+}
+nav ul li a.active,nav ul li a:hover{color:var(--white)}
+nav ul li a.active::before{opacity:1}
+nav ul li ul{padding-left:10px;margin-top:2px;display:none;flex-direction:column;gap:2px}
+nav ul li.open ul{display:flex}
+nav ul li ul li a{font-size:9px;letter-spacing:.16em;color:#444}
+nav ul li ul li a.active,nav ul li ul li a:hover{color:var(--white)}
+
+.sb-bottom{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--grey);line-height:1.9}
+.sb-bottom a{color:var(--grey);text-decoration:none;cursor:none;transition:color .2s}
+.sb-bottom a:hover{color:var(--white)}
+
+/* BURGER — toujours visible */
+#burger{
+  position:fixed;top:28px;left:28px;z-index:300;
+  width:36px;height:36px;
+  display:flex;flex-direction:column;justify-content:center;gap:6px;
+  cursor:none;padding:4px;
+}
+#burger span{display:block;height:1px;background:#fff;transition:all .3s}
+#burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+#burger.open span:nth-child(2){opacity:0}
+#burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* OVERLAY quand menu ouvert */
+#overlay{
+  position:fixed;inset:0;z-index:150;
+  background:rgba(0,0,0,0);pointer-events:none;
+  transition:background .4s;
+}
+#overlay.show{background:rgba(0,0,0,0.5);pointer-events:all}
+
+/* MAIN */
+#main{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  overflow-y:auto;overflow-x:hidden;
+}
+
+/* HERO — plein écran, une photo, nom centré */
+#hero{
+  position:relative;width:100%;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+#hero-img{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  transform:scale(1.03);
+  transition:transform 8s ease;
+}
+#hero-img.loaded{transform:scale(1)}
+.hero-veil{position:absolute;inset:0;background:rgba(0,0,0,0.38)}
+.hero-cnt{position:relative;z-index:2;text-align:center;pointer-events:none}
+.hero-nom{
+  font-family:var(--font-d);
+  font-size:clamp(56px,10vw,130px);
+  font-weight:200;letter-spacing:.06em;
+  line-height:.92;color:var(--white);
+}
+.hero-nom em{display:block;font-style:italic;font-weight:200}
+.hero-sub{
+  margin-top:18px;font-size:10px;letter-spacing:.32em;
+  text-transform:uppercase;color:rgba(255,255,255,.38);
+}
+.hero-arrow{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:rgba(255,255,255,.28);font-size:9px;letter-spacing:.22em;text-transform:uppercase;
+  animation:bob 2.5s ease-in-out infinite;
+}
+.hero-arrow svg{width:16px;opacity:.3}
+@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+
+/* GALLERY */
+.gal{padding:52px 44px 100px}
+.gal-block{margin-bottom:68px}
+.gal-label{
+  font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--grey);margin-bottom:18px;
+  display:flex;align-items:center;gap:14px;
+}
+.gal-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+.mason{columns:2;column-gap:8px}
+.mitem{break-inside:avoid;margin-bottom:8px;overflow:hidden}
+.mitem img{width:100%;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94)}
+.mitem:hover img{transform:scale(1.03)}
+.press{position:relative}
+.pbadge{
+  position:absolute;top:10px;left:10px;
+  font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  background:#000;color:#fff;border:1px solid rgba(255,255,255,.25);padding:3px 8px;z-index:2;
+}
+
+/* ABOUT */
+.abt{padding:56px 44px 100px;max-width:460px}
+.abt h2{font-family:var(--font-d);font-size:clamp(30px,4vw,54px);font-weight:200;font-style:italic;line-height:1.05;margin-bottom:30px}
+.abt p{color:var(--grey);line-height:1.9;font-size:13px;margin-bottom:16px}
+.abt-mail{margin-top:44px;font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+.abt-mail a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:2px;cursor:none;transition:border-color .2s}
+.abt-mail a:hover{border-color:#fff}
+
+/* RESPONSIVE mobile */
+@media(max-width:600px){
+  #burger{top:20px;left:20px}
+  .gal{padding:40px 18px 80px}
+  .abt{padding:40px 18px 80px}
+  .mason{columns:1}
+}
+</style>
+</head>
+<body>
+<div id="cur"></div>
+
+<!-- BURGER -->
+<div id="burger" aria-label="Menu">
+  <span></span><span></span><span></span>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay"></div>
+
+<!-- SIDEBAR -->
+<div id="sb">
+  <div>
+    <div class="sb-name" id="go-home"><span>Shanna</span><span>Samba</span></div>
+    <nav>
+      <ul>
+        <li>
+          <a href="#" data-page="argentique" class="active">Argentique</a>
+          <ul>
+            <li><a href="#" data-page="argentique" data-block="edito" class="sub-link">Édito</a></li>
+            <li><a href="#" data-page="argentique" data-block="japon" class="sub-link">Japon</a></li>
+            <li><a href="#" data-page="argentique" data-block="mauritanie" class="sub-link">Mauritanie</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#" data-page="evenements">Événements</a>
+          <ul>
+            <li><a href="#" data-page="evenements" data-block="loewe" class="sub-link">Loewe Perfumes</a></li>
+            <li><a href="#" data-page="evenements" data-block="artisan" class="sub-link">L'Artisan Parfumeur</a></li>
+          </ul>
+        </li>
+        <li><a href="#" data-page="about">À propos</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="sb-bottom">Paris<br><a href="mailto:info.shannasamba@gmail.com">info.shannasamba@gmail.com</a></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- HERO -->
+  <div id="hero">
+    <div id="hero-img" style="background-image:url('images/arg_edito_4.jpg')"></div>
+    <div class="hero-veil"></div>
+    <div class="hero-cnt">
+      <div class="hero-nom">Shanna<em>Samba</em></div>
+      <div class="hero-sub">Photographe — Paris</div>
+    </div>
+    <div class="hero-arrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </div>
+
+  <!-- ARGENTIQUE -->
+  <div class="page active" id="page-argentique">
+    <div class="gal">
+      <div class="gal-block" id="block-edito">
+        <div class="gal-label">Édito</div>
+        <div class="mason">
+          <div class="mitem"><img src="images/arg_edito_2.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_edito_3.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_edito_4.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_edito_5.jpg" alt=""></div>
+        </div>
+      </div>
+
+      <div class="gal-block" id="block-japon">
+        <div class="gal-label">Japon</div>
+        <div class="mason">
+          <div class="mitem"><img src="images/arg_pay_1.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_pay_2.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_pay_3.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_pay_4.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_pay_5.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_edito_1.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_edito_6.jpg" alt=""></div>
+        </div>
+      </div>
+      <div class="gal-block" id="block-mauritanie">
+        <div class="gal-label">Mauritanie</div>
+        <div class="mason">
+          <div class="mitem"><img src="images/arg_pay_7.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_pay_8.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_pay_9.jpg" alt=""></div>
+          <div class="mitem"><img src="images/arg_pay_10.jpg" alt=""></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉVÉNEMENTS -->
+  <div class="page" id="page-evenements">
+    <div class="gal">
+      <div class="gal-block" id="block-loewe">
+        <div class="gal-label">Loewe Perfumes</div>
+        <div class="mason">
+          <div class="mitem"><img src="images/ev_loewe_1.jpg" alt=""></div>
+          <div class="mitem"><img src="images/ev_loewe_2.jpg" alt=""></div>
+          <div class="mitem"><img src="images/ev_loewe_3.jpg" alt=""></div>
+          <div class="mitem"><img src="images/ev_loewe_4.jpg" alt=""></div>
+          <div class="mitem"><img src="images/ev_loewe_5.jpg" alt=""></div>
+        </div>
+      </div>
+      <div class="gal-block" id="block-artisan">
+        <div class="gal-label">L'Artisan Parfumeur</div>
+        <div class="mason">
+          <div class="mitem"><img src="images/ev_ap_1.jpg" alt=""></div>
+          <div class="mitem"><img src="images/ev_ap_2.jpg" alt=""></div>
+          <div class="mitem"><img src="images/ev_ap_3.jpg" alt=""></div>
+          <div class="mitem press"><div class="pbadge">Numéro Magazine</div><img src="images/ev_ap_presse.jpg" alt=""></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="page" id="page-about">
+    <div class="abt">
+      <h2>Photographe<br>basée à Paris.</h2>
+      <p>Entre regard argentique et narration visuelle, je photographie le monde au travers de mes objectifs.</p>
+      <p>Basée à Paris, disponible partout ailleurs.</p>
+      <div class="abt-mail"><a href="mailto:info.shannasamba@gmail.com">info.shannasamba@gmail.com</a></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const cur=document.getElementById('cur');
+document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px'});
+document.querySelectorAll('img,a,button,.mitem,#go-home,#burger').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cur.classList.add('b'));
+  el.addEventListener('mouseleave',()=>cur.classList.remove('b'));
+});
+
+// Hero image load animation
+setTimeout(()=>document.getElementById('hero-img').classList.add('loaded'),100);
+
+// Burger / sidebar
+const sb=document.getElementById('sb');
+const burger=document.getElementById('burger');
+const overlay=document.getElementById('overlay');
+function toggleMenu(force){
+  const open = force!==undefined ? force : !sb.classList.contains('show');
+  sb.classList.toggle('show',open);
+  burger.classList.toggle('open',open);
+  overlay.classList.toggle('show',open);
+}
+burger.addEventListener('click',()=>toggleMenu());
+overlay.addEventListener('click',()=>toggleMenu(false));
+
+// Navigation
+const main=document.getElementById('main');
+const hero=document.getElementById('hero');
+const pages=document.querySelectorAll('.page');
+const parentLinks=document.querySelectorAll('nav > ul > li > a');
+
+function showPage(pageId,blockId){
+  hero.style.display='none';
+  pages.forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  parentLinks.forEach(l=>{l.classList.remove('active');l.parentElement.classList.remove('open')});
+  const a=document.querySelector('nav > ul > li > a[data-page="'+pageId+'"]');
+  if(a){a.classList.add('active');a.parentElement.classList.add('open')}
+  main.scrollTo({top:0});
+  toggleMenu(false);
+  if(blockId) setTimeout(()=>{
+    const b=document.getElementById('block-'+blockId);
+    if(b) b.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+}
+
+parentLinks.forEach(l=>l.addEventListener('click',e=>{e.preventDefault();showPage(l.dataset.page)}));
+document.querySelectorAll('.sub-link').forEach(l=>l.addEventListener('click',e=>{
+  e.preventDefault();showPage(l.dataset.page,l.dataset.block);
+}));
+document.getElementById('go-home').addEventListener('click',()=>{
+  pages.forEach(p=>p.classList.remove('active'));
+  parentLinks.forEach(l=>{l.classList.remove('active');l.parentElement.classList.remove('open')});
+  hero.style.display='flex';
+  main.scrollTo({top:0});
+  toggleMenu(false);
+});
+</script>
+</body>
+</html>
